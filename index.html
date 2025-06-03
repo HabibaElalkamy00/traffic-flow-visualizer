@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>محاكاة كثافة المرور</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- مكتبة PapaParse لقراءة CSV -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+</head>
+<body>
+  <h1>محاكاة كثافة المرور</h1>
+
+  <div id="map-container">
+    <!-- خريطة SVG ستظهر هنا -->
+  </div>
+
+  <div id="controls">
+    <label for="time-slider">🕒 اختر الوقت:</label>
+    <input type="range" id="time-slider" min="0" max="0" step="1" value="0" />
+    <span id="time-label">--:--</span>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
