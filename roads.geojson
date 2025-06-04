@@ -1,0 +1,53 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "King Abdullah",
+        "color0800": "#00C853",
+        "color1300": "#FFEB3B",
+        "color1800": "#D50000"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [46.6100, 24.7440],
+          [46.7600, 24.7200]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "King Fahd",
+        "color0800": "#FFEB3B",
+        "color1300": "#FFEB3B",
+        "color1800": "#D50000"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [46.6760, 24.8260],
+          [46.6760, 24.5930]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Takhassusi",
+        "color0800": "#00C853",
+        "color1300": "#FFEB3B",
+        "color1800": "#D50000"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [46.6570, 24.8280],
+          [46.6570, 24.6000]
+        ]
+      }
+    }
+  ]
+}

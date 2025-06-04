@@ -1,54 +1,96 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>خريطة زحام الرياض</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <title>خريطة الزحام - Google Maps + GeoJSON</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.js"></script>
+  <style>
+    body { background: #f9f9f9; text-align: center; font-family: 'Arial'; }
+    #map { width: 100%; height: 600px; max-width: 960px; margin: 20px auto; border-radius: 12px; }
+    #slider { width: 260px; margin: 16px auto; }
+    .card-custom { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 20px; margin-top: 20px; }
+  </style>
 </head>
 <body>
 
   <div class="container py-4">
-    <div class="traffic-card">
+    <div class="card-custom">
+      <h2 class="mb-4">🚦 خريطة الزحام - الرياض (Google Maps + GeoJSON)</h2>
 
-      <h2 class="text-center mb-4">🚦 خريطة الزحام المروري - الرياض</h2>
+      <label class="form-label fw-bold">اختر الوقت:</label>
+      <div id="slider"></div>
 
-      <div class="mb-3 text-center">
-        <label for="timeSelector" class="form-label fw-bold">اختر الوقت:</label>
-        <select id="timeSelector" class="form-select w-50 mx-auto">
-          <option value="08:00">08:00 صباحًا</option>
-          <option value="13:00">01:00 ظهرًا</option>
-          <option value="18:00">06:00 مساءً</option>
-        </select>
-      </div>
-
-      <div id="mapContainer">
-        <svg baseProfile="full" version="1.1"
-             xmlns="http://www.w3.org/2000/svg"
-             viewBox="0 0 800 600" preserveAspectRatio="xMidYMid meet">
-
-          <rect fill="#f7f9fc" height="600" width="800" x="0" y="0" />
-
-          <!-- King Abdullah -->
-          <line id="kingAbdullah" stroke="#cccccc" stroke-linecap="round" stroke-width="18"
-                x1="50" x2="750" y1="300" y2="300" />
-          <text fill="black" font-size="14px" x="360" y="290">King Abdullah</text>
-
-          <!-- King Fahd -->
-          <line id="kingFahd" stroke="#cccccc" stroke-linecap="round" stroke-width="18"
-                x1="400" x2="400" y1="50" y2="550" />
-          <text fill="black" font-size="14px" transform="rotate(90,410,160)" x="410" y="160">King Fahd</text>
-
-          <!-- Takhassusi -->
-          <line id="takhassusi" stroke="#cccccc" stroke-linecap="round" stroke-width="18"
-                x1="250" x2="250" y1="50" y2="550" />
-          <text fill="black" font-size="14px" transform="rotate(90,260,160)" x="260" y="160">Takhassusi</text>
-        </svg>
-      </div>
-
+      <div id="map"></div>
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <script>
+    let map;
+    let geojsonData;
+    const times = ['0800', '1300', '1800'];
+    let currentIndex = 0;
+
+    function initMap() {
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 24.7136, lng: 46.6839 },
+        zoom: 12
+      });
+
+      fetch("roads.geojson")
+        .then(res => res.json())
+        .then(data => {
+          geojsonData = data;
+          drawRoads(times[currentIndex]);
+        });
+
+      const slider = document.getElementById("slider");
+      noUiSlider.create(slider, {
+        start: 0,
+        step: 1,
+        range: { min: 0, max: times.length - 1 },
+        tooltips: {
+          to: value => times[value].slice(0, 2) + ":00",
+          from: Number
+        },
+        format: {
+          to: value => parseInt(value),
+          from: Number
+        }
+      });
+
+      slider.noUiSlider.on("update", ([value]) => {
+        currentIndex = parseInt(value);
+        drawRoads(times[currentIndex]);
+      });
+    }
+
+    function drawRoads(timeKey) {
+      map.data.forEach(f => map.data.remove(f));
+
+      geojsonData.features.forEach(feature => {
+        const color = feature.properties[`color${timeKey}`] || "#cccccc";
+        const newFeature = {
+          type: "Feature",
+          geometry: feature.geometry,
+          properties: { color }
+        };
+        map.data.addGeoJson(newFeature);
+      });
+
+      map.data.setStyle(f => ({
+        strokeColor: f.getProperty("color"),
+        strokeWeight: 8,
+        strokeOpacity: 0.9
+      }));
+    }
+  </script>
+
+  <!-- Google Maps API -->
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCut6dz90StDvWaO8w32A1iH7u84LD9tMM&callback=initMap">
+  </script>
+
 </body>
 </html>
