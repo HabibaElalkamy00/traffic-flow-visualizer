@@ -1,74 +1,41 @@
-let trafficDataByTime = {};
-let availableTimes = [];
+const timeSelector = document.getElementById("timeSelector");
 
-fetch("mock_map.svg")
-  .then((res) => res.text())
-  .then((svgText) => {
-    document.getElementById("map-container").innerHTML = svgText;
-    loadTrafficData();
-  })
-  .catch((err) => console.error("❌ خطأ في تحميل الخريطة:", err));
+function updateRoadColors(time) {
+  fetch("riyadh_roads_density.csv")
+    .then(response => response.text())
+    .then(csv => {
+      const lines = csv.trim().split("\n").slice(1); 
+      const densityMap = {
+        kingAbdullah: null,
+        kingFahd: null,
+        takhassusi: null
+      };
 
-function loadTrafficData() {
-  fetch("mock_traffic_data.csv")
-    .then((res) => res.text())
-    .then((csvText) => {
-      const parsed = Papa.parse(csvText, {
-        header: true,
-        skipEmptyLines: true,
-      }).data;
-
-      parsed.forEach((row) => {
-        const time = row.time.trim();
-        if (!trafficDataByTime[time]) {
-          trafficDataByTime[time] = [];
-          availableTimes.push(time);
+      lines.forEach(line => {
+        const [csvTime, road, densityStr] = line.split(",");
+        const density = parseInt(densityStr);
+        if (csvTime === time) {
+          if (road === "King Abdullah") densityMap.kingAbdullah = density;
+          if (road === "King Fahd") densityMap.kingFahd = density;
+          if (road === "Takhassusi") densityMap.takhassusi = density;
         }
-        trafficDataByTime[time].push(row);
       });
 
-      setupTimeSlider();
-      visualizeTraffic(availableTimes[0]);
-    })
-    .catch((err) => console.error("❌ خطأ في قراءة CSV:", err));
+      for (const roadId in densityMap) {
+        const road = document.getElementById(roadId);
+        const value = densityMap[roadId];
+        if (road && value !== null) {
+          let color = "#00C853"; // أخضر
+          if (value >= 10 && value <= 25) color = "#FFEB3B"; // أصفر
+          else if (value > 25) color = "#D50000"; // أحمر
+          road.setAttribute("stroke", color);
+        }
+      }
+    });
 }
 
-function setupTimeSlider() {
-  const slider = document.getElementById("time-slider");
-  const label = document.getElementById("time-label");
+updateRoadColors(timeSelector.value);
 
-  slider.max = availableTimes.length - 1;
-  slider.value = 0;
-  label.textContent = availableTimes[0];
-
-  slider.addEventListener("input", (e) => {
-    const index = parseInt(e.target.value);
-    const selectedTime = availableTimes[index];
-    label.textContent = selectedTime;
-    visualizeTraffic(selectedTime);
-  });
-}
-
-function visualizeTraffic(time) {
-  const svg = document.querySelector("#map-container svg");
-  if (!svg) return;
-
-  const lines = svg.querySelectorAll("line");
-  const data = trafficDataByTime[time] || [];
-
-  lines.forEach((line, index) => {
-    const item = data[index];
-    if (!item) return;
-
-    const count = parseInt(item.count);
-    let color = "green";
-
-    if (count > 30) color = "red";
-    else if (count > 15) color = "orange";
-
-    line.setAttribute("stroke", color);
-    line.setAttribute("stroke-width", 4);
-  });
-
-  console.log(`✅ عرض الكثافة لوقت: ${time}`);
-}
+timeSelector.addEventListener("change", () => {
+  updateRoadColors(timeSelector.value);
+});
