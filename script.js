@@ -1,41 +1,59 @@
-// const timeSelector = document.getElementById("timeSelector");
 
-// function updateRoadColors(time) {
-//   fetch("riyadh_roads_density.csv")
-//     .then(response => response.text())
-//     .then(csv => {
-//       const lines = csv.trim().split("\n").slice(1); 
-//       const densityMap = {
-//         kingAbdullah: null,
-//         kingFahd: null,
-//         takhassusi: null
-//       };
+    let map;
+    let geojsonData;
+    const times = ['0800', '1300', '1800'];
+    let currentIndex = 0;
 
-//       lines.forEach(line => {
-//         const [csvTime, road, densityStr] = line.split(",");
-//         const density = parseInt(densityStr);
-//         if (csvTime === time) {
-//           if (road === "King Abdullah") densityMap.kingAbdullah = density;
-//           if (road === "King Fahd") densityMap.kingFahd = density;
-//           if (road === "Takhassusi") densityMap.takhassusi = density;
-//         }
-//       });
+    function initMap() {
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 24.7136, lng: 46.6839 },
+        zoom: 12
+      });
 
-//       for (const roadId in densityMap) {
-//         const road = document.getElementById(roadId);
-//         const value = densityMap[roadId];
-//         if (road && value !== null) {
-//           let color = "#00C853"; // أخضر
-//           if (value >= 10 && value <= 25) color = "#FFEB3B"; // أصفر
-//           else if (value > 25) color = "#D50000"; // أحمر
-//           road.setAttribute("stroke", color);
-//         }
-//       }
-//     });
-// }
+      fetch("roads.geojson")
+        .then(res => res.json())
+        .then(data => {
+          geojsonData = data;
+          drawRoads(times[currentIndex]);
+        });
 
-// updateRoadColors(timeSelector.value);
+      const slider = document.getElementById("slider");
+      noUiSlider.create(slider, {
+        start: 0,
+        step: 1,
+        range: { min: 0, max: times.length - 1 },
+        tooltips: {
+          to: value => times[value].slice(0, 2) + ":00",
+          from: Number
+        },
+        format: {
+          to: value => parseInt(value),
+          from: Number
+        }
+      });
 
-// timeSelector.addEventListener("change", () => {
-//   updateRoadColors(timeSelector.value);
-// });
+      slider.noUiSlider.on("update", ([value]) => {
+        currentIndex = parseInt(value);
+        drawRoads(times[currentIndex]);
+      });
+    }
+
+    function drawRoads(timeKey) {
+      map.data.forEach(f => map.data.remove(f));
+
+      geojsonData.features.forEach(feature => {
+        const color = feature.properties[`color${timeKey}`] || "#cccccc";
+        const newFeature = {
+          type: "Feature",
+          geometry: feature.geometry,
+          properties: { color }
+        };
+        map.data.addGeoJson(newFeature);
+      });
+
+      map.data.setStyle(f => ({
+        strokeColor: f.getProperty("color"),
+        strokeWeight: 8,
+        strokeOpacity: 0.9
+      }));
+    }
